@@ -95,8 +95,28 @@ async function parsePDF(filePath: string): Promise<void> {
       }
 
       //description
-      while (j < lines.length && lines[j].trim() !== "" && !/^\d/.test(lines[j])) {
-        descriptionLines.push(lines[j])
+      if (/^\d{1,3}$/.test(lines[j])) {
+        console.warn(`⚠️ Skipped probable page number: ${lines[j]} (line ${j})`)
+      }
+
+      while (j < lines.length && lines[j].trim() === "") {
+        j++
+      }
+
+      // Collect description lines until next group or occupation code
+      // while (j < lines.length && !/^\d{1,4}\s/.test(lines[j]) && !/^\d{6}/.test(lines[j])) {
+      //   descriptionLines.push(lines[j])
+      //   j++
+      // }
+      while (
+        j < lines.length &&
+        !/^\d{1,4}\s/.test(lines[j]) && // not a new group
+        !/^\d{6}/.test(lines[j]) // not an occupation
+      ) {
+        const isProbablyPageNumber = /^\d{1,3}$/.test(lines[j])
+        if (!isProbablyPageNumber) {
+          descriptionLines.push(lines[j])
+        }
         j++
       }
 
@@ -161,5 +181,25 @@ async function parsePDF(filePath: string): Promise<void> {
   )
 }
 
-// Example usage
-parsePDF("data/data-pdfs/Grupa_Majora_1_27062024.pdf")
+async function parseAllPDFs() {
+  const files = [
+    // "data/data-pdfs/Grupa_majora_0_Fortele_armate.pdf",
+    "data/data-pdfs/Grupa_Majora_1_27062024.pdf",
+    "data/data-pdfs/Grupa_Majora_2_24032025.pdf",
+    "data/data-pdfs/Grupa_Majora_3_24032025.pdf",
+    "data/data-pdfs/Grupa_Majora_4_16042024.pdf",
+    "data/data-pdfs/Grupa_Majora_5_16112024.pdf",
+    "data/data-pdfs/Grupa_Majora_6_062023.pdf",
+    "data/data-pdfs/Grupa_Majora_7_12122024.pdf",
+    "data/data-pdfs/Grupa_Majora_8_12122024.pdf",
+    "data/data-pdfs/Grupa_Majora_9_07102022.pdf",
+  ]
+
+  for (const file of files) {
+    await parsePDF(file)
+  }
+
+  console.log("🎉 All PDFs parsed in order.")
+}
+
+parseAllPDFs()
